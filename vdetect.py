@@ -29,6 +29,11 @@ def window_region(im, bbox):
 
     return im[y1:y2+1, x1:x2+1]
 
+def set_window_to_val(im, bbox, val):
+
+    x1, y1, x2, y2  = bbox
+    im[y1:y2+1, x1:x2+1] = val
+
 
 def window_loop(side_len, step, x0, y0, x1, y1):
     '''
@@ -105,5 +110,25 @@ def define_main_region_custom():
     return 0, y_top, x_max, y_bottom
 
 
-def sliding_window():
-    pass
+def sliding_window(im, func):
+
+    rows, cols = im.shape[:2]
+    canvas = np.zeros((rows, cols))
+
+    main_region = define_main_region_custom()
+    mr_x0, mr_y0, mr_x1, mr_y1 = main_region
+
+    loops = [
+        window_loop(512, 256, mr_x0, mr_y0, mr_x1, mr_y1),
+        window_loop(256, 128, mr_x0, mr_y0, mr_x1, mr_y1),
+        window_loop(128, 64, mr_x0, mr_y0+128, mr_x1, mr_y1-64),
+        window_loop(64, 32, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64)
+    ]
+
+    for loop in loops:
+        for bbox in loop:
+            win = window_region(im, bbox)
+            res = func(win)
+
+            if res:
+                set_window_to_val(canvas, bbox, 1)
