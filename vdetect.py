@@ -80,5 +80,21 @@ def window_loop(side_len, step, x0, y0, x1, y1):
     return np.array(bboxes)
 
 
+def define_main_region_custom():
+    '''
+    Return the custom main region of interest
+    for the project's images and video.
+    The region "cuts" sky up and the car's trunk
+    down, and has the dimensions of (1280, 512)
+    '''
+
+    x_max = 1280
+
+    y_bottom = 650
+    y_top = y_bottom - 512
+
+    return 0, y_top, x_max, y_bottom
+
+
 def sliding_window():
     pass
