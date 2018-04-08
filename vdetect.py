@@ -49,8 +49,17 @@ def window_loop(side_len, step, x0, y0, x1, y1):
 
         res = []
 
-        s1 = range(val0, side_len * n1, side_len)
-        s2 = range(val0 + step, step + side_len * n2, side_len)
+        s1 = range(
+            val0,
+            val0 + side_len * n1,
+            side_len
+        )
+
+        s2 = range(
+            val0 + step,
+            val0 + step + side_len * n2,
+            side_len
+        )
 
         for a, b in zip(s1, s2):
             res.append(a)
