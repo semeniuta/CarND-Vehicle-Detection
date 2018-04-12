@@ -250,3 +250,59 @@ def split_and_scale_features(list_of_feature_vecs):
 
     X_train_scaled, X_test_scaled = scale_data(X_train, X_test)
     return X_train_scaled, X_test_scaled
+
+
+def prepare_train_test_data_single_class(imfiles, yval):
+    '''
+    Prepare features from the supplied image files
+    characterized with a fixed y value (0 or 1).
+    Returns training and testing data sets
+    (X_train, y_train, X_test, y_test)
+    '''
+
+    feature_sets = ('hog', 'binned', 'hist')
+    lists_of_feature_vecs = {k: [] for k in feature_sets}
+
+    for imfile in imfiles:
+
+        im = open_image(imfile)
+
+        hog, binned, hist = extract_features(im)
+
+        lists_of_feature_vecs['hog'].append(hog)
+        lists_of_feature_vecs['binned'].append(binned)
+        lists_of_feature_vecs['hist'].append(hist)
+
+    train = dict()
+    test = dict()
+    for k, lst in lists_of_feature_vecs.items():
+        x_train, x_test = split_and_scale_features(lst)
+        train[k] = x_train
+        test[k] = x_test
+
+    X_train = np.hstack([train[k] for k in feature_sets])
+    X_test = np.hstack([test[k] for k in feature_sets])
+
+    y_train = np.ones(X_train.shape[0]) * yval
+    y_test = np.ones(X_test.shape[0]) * yval
+
+    return X_train, y_train, X_test, y_test
+
+
+def prepare_train_test_data(imfiles_0, imfiles_1):
+    '''
+    Preprocess all image files (for both y=0 and y=1 cases)
+    and return training and testing data sets
+    (X_train, y_train, X_test, y_test)
+    '''
+
+    X0_train, y0_train, X0_test, y0_test = prepare_train_test_data_single_class(imfiles_1, 0)
+    X1_train, y1_train, X1_test, y1_test = prepare_train_test_data_single_class(imfiles_1, 1)
+
+    X_train = np.vstack((X0_train, X1_train))
+    X_test = np.vstack((X0_test, X1_test))
+
+    y_train = np.hstack((y0_train, y1_train))
+    y_test = np.hstack((y0_test, y1_test))
+
+    return X_train, y_train, X_test, y_test
