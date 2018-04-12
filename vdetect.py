@@ -12,6 +12,11 @@ from skimage.feature import hog
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
+from scaler import FeatureScaler
+
+
+FEATURE_SETS = ('hog', 'binned', 'hist')
+
 
 def open_image(fname, convert_to_rgb=True):
 
@@ -63,10 +68,23 @@ def window_region(im, bbox):
 
     return im[y1:y2+1, x1:x2+1]
 
+
 def set_window_to_val(im, bbox, val):
 
     x1, y1, x2, y2  = bbox
     im[y1:y2+1, x1:x2+1] = val
+
+
+def increment_window(im, bbox, increment_val=1):
+
+    x1, y1, x2, y2  = bbox
+
+    w = abs(x2 - x1 + 1)
+    h = abs(y2 - y1 + 1)
+
+    increment_arr = np.ones((h, w)) * increment_val
+
+    im[y1:y2+1, x1:x2+1] += increment_arr
 
 
 def window_loop(side_len, step, x0, y0, x1, y1):
@@ -227,82 +245,123 @@ def extract_features(im):
 
     hist_vec = np.hstack(histograms)
 
-    return hog_features, binned_pixels, hist_vec
+    features = {
+        'hog': hog_features,
+        'binned': binned_pixels,
+        'hist': hist_vec
+    }
+
+    return features
 
 
-def scale_data(*data_subsets):
+def create_scaler(X_train):
+
+    scaler = StandardScaler().fit(X_train)
+    return scaler
+
+
+def scale_data(scaler, *data_subsets): # deprecated
     '''
     Scale data subsets using StandardScaler that is fit using the
     first subset (typically, the training subset)
     '''
 
-    first = data_subsets[0]
-    scaler = StandardScaler().fit(first)
-
     scaled_subsets = [scaler.transform(x) for x in data_subsets]
     return scaled_subsets
 
 
-def split_and_scale_features(list_of_feature_vecs):
+def split_original_features(list_of_feature_vecs):
+    '''
+    Convert a list of feature vectors into
+    a single NumPy array and split it
+    into training and testing set
+    '''
 
     X_all = np.array(list_of_feature_vecs, dtype=np.float64)
     X_train, X_test = train_test_split(X_all)
 
-    X_train_scaled, X_test_scaled = scale_data(X_train, X_test)
-    return X_train_scaled, X_test_scaled
+    return X_train, X_test
 
 
-def prepare_train_test_data_single_class(imfiles, yval):
+def split_and_scale_features(list_of_feature_vecs): # deprecated
+
+    X_train, X_test = split_original_features(list_of_feature_vecs)
+
+    scaler = create_scaler(X_train)
+    X_train_scaled, X_test_scaled = scale_data(scaler, X_train, X_test)
+
+    return X_train_scaled, X_test_scaled, scaler
+
+
+def prepare_train_test_data_single_class(imfiles):
     '''
     Prepare features from the supplied image files
     characterized with a fixed y value (0 or 1).
-    Returns training and testing data sets
-    (X_train, y_train, X_test, y_test)
+    Returns training and testing dictionaries
+    with 'hog', 'binned', 'hist' as keys and the correspoding
+    (unscaled) data sets as values
     '''
 
-    feature_sets = ('hog', 'binned', 'hist')
-    lists_of_feature_vecs = {k: [] for k in feature_sets}
+    lists_of_feature_vecs = {k: [] for k in FEATURE_SETS}
 
     for imfile in imfiles:
 
         im = open_image(imfile)
+        im_features = extract_features(im)
 
-        hog, binned, hist = extract_features(im)
+        for k in FEATURE_SETS:
+            lists_of_feature_vecs[k].append(im_features[k])
 
-        lists_of_feature_vecs['hog'].append(hog)
-        lists_of_feature_vecs['binned'].append(binned)
-        lists_of_feature_vecs['hist'].append(hist)
-
-    train = dict()
-    test = dict()
+    train_orig = dict()
+    test_orig = dict()
     for k, lst in lists_of_feature_vecs.items():
-        x_train, x_test = split_and_scale_features(lst)
-        train[k] = x_train
-        test[k] = x_test
+        train_orig[k], test_orig[k] = split_original_features(lst)
 
-    X_train = np.hstack([train[k] for k in feature_sets])
-    X_test = np.hstack([test[k] for k in feature_sets])
-
-    y_train = np.ones(X_train.shape[0]) * yval
-    y_test = np.ones(X_test.shape[0]) * yval
-
-    return X_train, y_train, X_test, y_test
+    return train_orig, test_orig
 
 
 def prepare_train_test_data(imfiles_0, imfiles_1):
     '''
     Preprocess all image files (for both y=0 and y=1 cases)
-    and return training and testing data sets
-    (X_train, y_train, X_test, y_test)
+    and return training and testing data sets, and the FeatureScaler object
+    (X_train, y_train, X_test, y_test, scaler)
     '''
 
-    X0_train, y0_train, X0_test, y0_test = prepare_train_test_data_single_class(imfiles_1, 0)
-    X1_train, y1_train, X1_test, y1_test = prepare_train_test_data_single_class(imfiles_1, 1)
+    print('Extracting original heterogeneous features from images (class 0)')
+    train_orig_0, test_orig_0 = prepare_train_test_data_single_class(imfiles_0)
 
-    X_train = np.vstack((X0_train, X1_train))
-    X_test = np.vstack((X0_test, X1_test))
+    print('Extracting original heterogeneous features from images (class 1)')
+    train_orig_1, test_orig_1 = prepare_train_test_data_single_class(imfiles_1)
 
-    y_train = np.hstack((y0_train, y1_train))
-    y_test = np.hstack((y0_test, y1_test))
+    print('Scaling features')
 
-    return X_train, y_train, X_test, y_test
+    keys = train_orig_0.keys()
+    train_orig_all = {k: np.vstack((train_orig_0[k], train_orig_1[k])) for k in keys}
+    test_orig_all = {k: np.vstack((test_orig_0[k], test_orig_1[k])) for k in keys}
+
+    scaler = FeatureScaler(train_orig_all)
+
+    train_scaled = scaler.scale(train_orig_all)
+    test_scaled = scaler.scale(test_orig_all)
+
+    print('Final preparation of training and testing data sets')
+
+    X_train = np.hstack(
+        [train_scaled[k] for k in FEATURE_SETS]
+    )
+
+    X_test = np.hstack(
+        [test_scaled[k] for k in FEATURE_SETS]
+    )
+
+    y_train = np.hstack((
+        np.zeros( train_orig_0['hog'].shape[0] ),
+        np.ones( train_orig_1['hog'].shape[0] ),
+    ))
+
+    y_test = np.hstack((
+        np.zeros( test_orig_0['hog'].shape[0] ),
+        np.ones( test_orig_1['hog'].shape[0] ),
+    ))
+
+    return X_train, y_train, X_test, y_test, scaler
