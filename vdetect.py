@@ -2,10 +2,44 @@
 Core functions for vehicle detection
 '''
 
+import os
+from glob import glob
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from skimage.feature import hog
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+
+def open_image(fname, convert_to_rgb=True):
+
+    im = cv2.imread(fname)
+
+    if len(im.shape) == 2:
+        return im
+
+    if not convert_to_rgb:
+        return im
+
+    return cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+
+
+def create_image_files_list(data_dir):
+    '''
+    Visit subdirectories of data_dir
+    and build-up a list of file paths to images
+    '''
+
+    imfiles = []
+    for el in os.listdir(data_dir):
+        sub = os.path.join(data_dir, el)
+        if os.path.isdir(sub):
+            imfiles += glob(os.path.join(sub, '*.png'))
+
+    return imfiles
+
 
 
 def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
@@ -132,3 +166,87 @@ def sliding_window(im, func):
 
             if res:
                 set_window_to_val(canvas, bbox, 1)
+
+
+def convert_colorspace_and_get_channels(im, conversion):
+
+    converted = cv2.cvtColor(im, conversion)
+
+    n_channels = converted.shape[2]
+
+    channels = [converted[:,:,i] for i in range(n_channels)]
+    return channels
+
+
+def extract_hog_features(im, n_orient=9, cell_sz=8, block_sz=2):
+
+    features = hog(
+        im,
+        orientations=n_orient,
+        pixels_per_cell=(cell_sz, cell_sz),
+        cells_per_block=(block_sz, block_sz),
+        block_norm='L2-Hys',
+        visualise=False
+    )
+
+    return features
+
+
+def spatial_binning(im, size=32):
+
+    resized_im = cv2.resize(im, (size, size))
+    return resized_im.ravel()
+
+
+def image_histogram(im, n_bins=32):
+
+    counts, _ = np.histogram(im, bins=n_bins, range=(0, 256))
+    return counts
+
+
+def extract_features(im):
+
+    gray =  cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
+
+    LUV = convert_colorspace_and_get_channels(im, cv2.COLOR_RGB2LUV)
+    HLS = convert_colorspace_and_get_channels(im, cv2.COLOR_RGB2HLS)
+
+    H = HLS[0]
+    U = LUV[1]
+    R = im[:, :, 0]
+    G = im[:, :, 1]
+    B = im[:, :, 2]
+
+    hog_features = extract_hog_features(gray)
+    binned_pixels = spatial_binning(gray)
+
+    histograms = []
+    for channel in (R, G, B, H, U):
+        hist = image_histogram(channel)
+        histograms.append(hist)
+
+    hist_vec = np.hstack(histograms)
+
+    return hog_features, binned_pixels, hist_vec
+
+
+def scale_data(*data_subsets):
+    '''
+    Scale data subsets using StandardScaler that is fit using the
+    first subset (typically, the training subset)
+    '''
+
+    first = data_subsets[0]
+    scaler = StandardScaler().fit(first)
+
+    scaled_subsets = [scaler.transform(x) for x in data_subsets]
+    return scaled_subsets
+
+
+def split_and_scale_features(list_of_feature_vecs):
+
+    X_all = np.array(list_of_feature_vecs, dtype=np.float64)
+    X_train, X_test = train_test_split(X_all)
+
+    X_train_scaled, X_test_scaled = scale_data(X_train, X_test)
+    return X_train_scaled, X_test_scaled
