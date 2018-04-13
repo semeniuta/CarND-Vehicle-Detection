@@ -162,7 +162,7 @@ def define_main_region_custom():
     return 0, y_top, x_max, y_bottom
 
 
-def sliding_window(im, func):
+def sliding_window(im, extract, clf):
 
     rows, cols = im.shape[:2]
     canvas = np.zeros((rows, cols))
@@ -180,10 +180,17 @@ def sliding_window(im, func):
     for loop in loops:
         for bbox in loop:
             win = window_region(im, bbox)
-            res = func(win)
 
-            if res:
-                set_window_to_val(canvas, bbox, 1)
+            if win.shape != (64, 64, 3):
+                win = cv2.resize(win, (64, 64))
+
+            features = extract(win)
+            yhat = clf.predict(features)[0]
+
+            if yhat == 1.:
+                increment_window(canvas, bbox)
+
+    return canvas
 
 
 def convert_colorspace_and_get_channels(im, conversion):
