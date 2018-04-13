@@ -254,22 +254,6 @@ def extract_features(im):
     return features
 
 
-def create_scaler(X_train):
-
-    scaler = StandardScaler().fit(X_train)
-    return scaler
-
-
-def scale_data(scaler, *data_subsets): # deprecated
-    '''
-    Scale data subsets using StandardScaler that is fit using the
-    first subset (typically, the training subset)
-    '''
-
-    scaled_subsets = [scaler.transform(x) for x in data_subsets]
-    return scaled_subsets
-
-
 def split_original_features(list_of_feature_vecs):
     '''
     Convert a list of feature vectors into
@@ -281,16 +265,6 @@ def split_original_features(list_of_feature_vecs):
     X_train, X_test = train_test_split(X_all)
 
     return X_train, X_test
-
-
-def split_and_scale_features(list_of_feature_vecs): # deprecated
-
-    X_train, X_test = split_original_features(list_of_feature_vecs)
-
-    scaler = create_scaler(X_train)
-    X_train_scaled, X_test_scaled = scale_data(scaler, X_train, X_test)
-
-    return X_train_scaled, X_test_scaled, scaler
 
 
 def prepare_train_test_data_single_class(imfiles):
@@ -365,3 +339,18 @@ def prepare_train_test_data(imfiles_0, imfiles_1):
     ))
 
     return X_train, y_train, X_test, y_test, scaler
+
+
+def create_feature_extractor(scaler):
+
+    def extract(im):
+        features_dict = extract_features(im)
+        scaled_dict = scaler.scale(features_dict)
+
+        x = np.hstack(
+            [scaled_dict[k] for k in FEATURE_SETS]
+        )#.reshape(-1)
+
+        return x
+
+    return extract

@@ -12,7 +12,7 @@ def get_classifier_name(clf):
 def save_obj(obj, fname):
 
     with open(fname, 'wb') as f:
-        pickle.dump(clf, f)
+        pickle.dump(obj, f)
 
 
 if __name__ == '__main__':
@@ -20,7 +20,13 @@ if __name__ == '__main__':
     imfiles_0 = vdetect.create_image_files_list('../non-vehicles')
     imfiles_1 = vdetect.create_image_files_list('../vehicles')
 
-    X_train, y_train, X_test, y_test, scaler = vdetect.prepare_train_test_data(imfiles_0[:200], imfiles_1[:200])
+    print('Number of vehicle examples:', len(imfiles_1))
+    print('Number of non-vehicle examples:', len(imfiles_0))
+
+    X_train, y_train, X_test, y_test, scaler = vdetect.prepare_train_test_data(imfiles_0, imfiles_1)
+
+    print('Training data shape:', X_train.shape, y_train.shape)
+    print('Testing data shape:', X_test.shape, y_test.shape)
 
     classifiers = [
         #naive_bayes.MultinomialNB(),
@@ -41,5 +47,5 @@ if __name__ == '__main__':
     print('Score of {}: {:.3f}'.format(get_classifier_name(clf), score))
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    save_obj(clf, 'model_' + timestamp + '.p')
-    save_obj(scaler, 'scaler_' + timestamp + '.p')
+    save_obj(clf, 'serialize/model_' + timestamp + '.p')
+    save_obj(scaler, 'serialize/scaler_' + timestamp + '.p')
