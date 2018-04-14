@@ -162,7 +162,7 @@ def define_main_region_custom():
     return 0, y_top, x_max, y_bottom
 
 
-def sliding_window(im, extract, clf):
+def sliding_window(im, extract, classifiers):
 
     rows, cols = im.shape[:2]
     canvas = np.zeros((rows, cols))
@@ -185,10 +185,12 @@ def sliding_window(im, extract, clf):
                 win = cv2.resize(win, (64, 64))
 
             features = extract(win)
-            yhat = clf.predict(features)[0]
 
-            if yhat == 1.:
-                increment_window(canvas, bbox)
+            for clf in classifiers:
+                yhat = clf.predict(features)[0]
+
+                if yhat == 1.:
+                    increment_window(canvas, bbox)
 
     return canvas
 

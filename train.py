@@ -28,24 +28,26 @@ if __name__ == '__main__':
     print('Training data shape:', X_train.shape, y_train.shape)
     print('Testing data shape:', X_test.shape, y_test.shape)
 
-    classifiers = [
-        #naive_bayes.MultinomialNB(),
-        #naive_bayes.GaussianNB(),
-        tree.DecisionTreeClassifier(),
-        ensemble.AdaBoostClassifier(),
-        ensemble.RandomForestClassifier(),
-        neighbors.KNeighborsClassifier()
-    ]
-
-    clf = tree.DecisionTreeClassifier()
-
-    print('Training ', get_classifier_name(clf))
-    clf.fit(X_train, y_train)
-
-    score = clf.score(X_test, y_test)
-
-    print('Score of {}: {:.3f}'.format(get_classifier_name(clf), score))
+    classifiers = {
+        'decision_tree': tree.DecisionTreeClassifier(),
+        'random_forest': ensemble.RandomForestClassifier(),
+    }
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    save_obj(clf, 'serialize/model_' + timestamp + '.p')
-    save_obj(scaler, 'serialize/scaler_' + timestamp + '.p')
+    for k, clf in classifiers.items():
+
+        print('Training ', get_classifier_name(clf))
+        clf.fit(X_train, y_train)
+
+        score = clf.score(X_test, y_test)
+
+        print('Score of {}: {:.3f}'.format(get_classifier_name(clf), score))
+
+        clf_fname = 'serialize/{}_{}.p'.format(k, timestamp)
+        save_obj(clf, clf_fname)
+
+        print('Saved classifier to {}'.format(clf_fname))
+
+    scaler_fname = 'serialize/scaler_{}.p'.format(timestamp)
+    save_obj(scaler, scaler_fname)
+    print('Saved scaler to {}'.format(scaler_fname))
