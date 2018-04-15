@@ -32,11 +32,11 @@ if __name__ == '__main__':
     print('Number of non-vehicle examples:', len(imfiles_0))
 
     hyperparams = {
-        'hog_n_orient': 12,
+        'hog_n_orient': 9,
         'hog_cell_sz': 8,
         'hog_block_sz': 2,
-        'binning_sz': 16,
-        'hist_bins': 64
+        'binning_sz': 32,
+        'hist_bins': 32
     }
 
     X_train, y_train, X_test, y_test, scaler, fs_sizes = vdetect.prepare_train_test_data(

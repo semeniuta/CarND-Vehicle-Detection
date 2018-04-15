@@ -116,6 +116,6 @@ if __name__ == '__main__':
 
     visualize_heatmap(
         'test_images',
-        'serialize/2018-04-15_130950',
+        'serialize/2018-04-15_113152',
         DIR_OUT
     )
