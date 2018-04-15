@@ -26,47 +26,34 @@ def visualize_window_search(im_src, dir_output):
     main_region = vdetect.define_main_region_custom()
     mr_x0, mr_y0, mr_x1, mr_y1 = main_region
 
+    '''
+    loops = [
+        ((512, 256), vdetect.window_loop(512, 256, mr_x0, mr_y0, mr_x1, mr_y1)),
+        ((256, 128), vdetect.window_loop(256, 128, mr_x0, mr_y0, mr_x1, mr_y1)),
+        ((128, 64), vdetect.window_loop(128, 64, mr_x0, mr_y0+128, mr_x1, mr_y1-64)),
+        ((64, 32), vdetect.window_loop(64, 32, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64))
+    ]
+    '''
+
+    loops = [
+        ((512, 128), vdetect.window_loop(512, 128, mr_x0, mr_y0, mr_x1, mr_y1)),
+        ((256, 64), vdetect.window_loop(256, 64, mr_x0, mr_y0, mr_x1, mr_y1)),
+        ((128, 32), vdetect.window_loop(128, 32, mr_x0, mr_y0+128, mr_x1, mr_y1-64)),
+        ((64, 16), vdetect.window_loop(64, 16, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64))
+    ]
+
     plt.figure(figsize=(20, 12))
+    idx = 1
+    for ss, loop in loops:
 
-    plt.subplot(2, 2, 1)
-    plt.imshow(
-        vdetect.draw_boxes(
-            im,
-            vdetect.window_loop(512, 256, mr_x0, mr_y0, mr_x1, mr_y1)
-        )
-    )
-    plt.title('size={:d}, step={:d}, main ROI'.format(512, 256))
-    plt.axis('off')
+        plt.subplot(2, 2, idx)
+        plt.imshow(vdetect.draw_boxes(im, loop))
 
-    plt.subplot(2, 2, 2)
-    plt.imshow(
-        vdetect.draw_boxes(
-            im,
-            vdetect.window_loop(256, 128, mr_x0, mr_y0, mr_x1, mr_y1)
-        )
-    )
-    plt.title('size={:d}, step={:d},  main ROI'.format(256, 128))
-    plt.axis('off')
+        size, step = ss
+        plt.title('size={:d}, step={:d}'.format(size, step))
+        plt.axis('off')
+        idx += 1
 
-    plt.subplot(2, 2, 3)
-    plt.imshow(
-        vdetect.draw_boxes(
-            im,
-            vdetect.window_loop(128, 64, mr_x0, mr_y0+128, mr_x1, mr_y1-64)
-        )
-    )
-    plt.title('size={:d}, step={:d}, smaller ROI'.format(128, 64))
-    plt.axis('off')
-
-    plt.subplot(2, 2, 4)
-    plt.imshow(
-        vdetect.draw_boxes(
-            im,
-            vdetect.window_loop(64, 32, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64)
-        )
-    )
-    plt.title('size={:d}, step={:d}, even smaller ROI'.format(64, 32))
-    plt.axis('off')
 
     plt.tight_layout()
     plt.savefig(os.path.join(dir_output, 'winsearch.jpg'))
@@ -158,11 +145,10 @@ if __name__ == '__main__':
 
     DIR_OUT = 'output_images'
 
-    process = create_processing_func('serialize/2018-04-15_113152')
-    process_and_save_video('project_video.mp4', 'output_images/project_video.mp4', process)
+    visualize_window_search('test_images/test3.jpg', DIR_OUT)
+    exit()
 
     visualize_main_region('test_images/test3.jpg', DIR_OUT)
-    visualize_window_search('test_images/test3.jpg', DIR_OUT)
 
     visualize_heatmap(
         'test_images',
@@ -175,3 +161,6 @@ if __name__ == '__main__':
         'serialize/2018-04-15_113152',
         DIR_OUT
     )
+
+    process = create_processing_func('serialize/2018-04-15_113152')
+    process_and_save_video('project_video.mp4', 'output_images/project_video.mp4', process)
