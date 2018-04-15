@@ -35,6 +35,20 @@ This project uses a feature preparation method (see `vdetect.extract_features`) 
 
 Upon extraction, the three feature sets are returned separately as values in a dictionary. Further, in `vdetect.prepare_train_test_data_single_class` and `vdetect.prepare_train_test_data`, dictionaries from individual images are combined together, shuffled, and separated into training and testing sets. To perform scaling on each feature sets separately, the `scaler.FeatureScaler` class is used. When constructed, `FeatureScaler` accepts a dictionary of training sets and fits a `sklearn.preprocessing.StandardScaler` on each feature set.
 
+
+```python
+
+scaler = FeatureScaler(train_dict)
+```
+
+Function `vdetect.create_feature_extractor` accepts an instance of `FeatureScaler` and returns a closure that performs feature extraction and scaling given an image (64, 64, 3).
+
+```
+extract = vdetect.create_feature_extractor(scaler, hyperparams)
+fvec = extract(im)
+```
+
+
 ### Sliding window
 
 The sliding window strategy applied in this project is based on a series of sliding window loops with windows of varying sizes over different search area.
@@ -46,6 +60,29 @@ Initially, the main region of interest (ROI) is chosen in the middle of the imag
 
 ### Machine learning
 
-To detect vehicles in the road images, several supervised classifiers (implemented in Scikit-learn) are trained given the vehicle/non-vehicle data, which was fed through the feature extraction routine, described earlier. The effects of different classifiers and their parameterization on the test images were evaluated graphically, by visual analysis of the heatmaps.
+To detect vehicles in the road images, several supervised classifiers (implemented in Scikit-learn) are trained given the vehicle/non-vehicle data, which was fed through the feature extraction routine, described earlier.
+
+The effects of different classifiers and their parameterization on the test images were evaluated graphically, by visual analysis of the heat maps produced by an individual classifiers.
+
+The following classifiers were chosen as the best-performing:
+
+* Decision tree classifier with default parameters
+* Decision tree classifier with `min_samples_split=5`
+* Random forest classifier with default parameters
+* Gradient boosting classifier with default parameters
+
+Feature extraction procedure is parameterized with the following hyperparameters:
+
+```json
+{
+    "hog_n_orient": 9,
+    "hog_cell_sz": 8,
+    "hog_block_sz": 2,
+    "binning_sz": 32,
+    "hist_bins": 32
+}
+
+```
+
 
 ### Vehicles detection
