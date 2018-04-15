@@ -5,6 +5,7 @@ import os
 import json
 
 import vdetect
+import genmedia
 
 
 def get_classifier_name(clf):
@@ -54,10 +55,10 @@ if __name__ == '__main__':
         'decision_tree_bigger_split': tree.DecisionTreeClassifier(
             min_samples_split=5
         ),
-        #'svc_custom': svm.SVC(
-        #    C=1.,
-        #    gamma=0.1
-        #),
+        'svc_custom': svm.SVC(
+            C=100.,
+            gamma=0.5
+        ),
         #'naive_bayes': naive_bayes.GaussianNB(),
         'random_forest_default': ensemble.RandomForestClassifier(),
         'grad_boost_default': ensemble.GradientBoostingClassifier(),
@@ -89,3 +90,5 @@ if __name__ == '__main__':
     hp_fname = os.path.join(savedir, 'hyper.json')
     save_json(hyperparams, hp_fname)
     print('Saved hyperparams to {}'.format(hp_fname))
+
+    visualize_classifiers('test_images', savedir, savedir)

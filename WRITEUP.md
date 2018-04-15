@@ -84,5 +84,10 @@ Feature extraction procedure is parameterized with the following hyperparameters
 
 ```
 
+### Vehicles segmentation
 
-### Vehicles detection
+Segmentation of image regions with vehicles (implemented in `vdetect.segment_vehicles`) is based on thresholding a heat map produced by sliding window search and ML-based classification, followed by connected components detection (using `cv2.connectedComponentsWithStats`).
+
+The threshold is defined as a ratio of the maximal value of a heat map (in this project: `0.7 * np.max(heatmap)`).
+
+False positive in images with no vehicles result in low value of `np.max(heatmap)`. Such images are ruled out by comparing `np.max(heatmap)` with the `low_limit` threshold (in this project: 10).
