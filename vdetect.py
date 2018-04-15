@@ -404,9 +404,14 @@ def mask_threashold_range(im, thresh_min, thresh_max):
     return np.uint8(binary_output)
 
 
-def segment_vehicles(heatmap, threshold_ratio=0.8):
+def segment_vehicles(heatmap, threshold_ratio=0.7, low_limit=10):
 
-    threshold = threshold_ratio * np.max(heatmap)
+    heatmap_max = np.max(heatmap)
+
+    if heatmap_max <= low_limit:
+        return None
+
+    threshold = threshold_ratio * heatmap_max
     thresholded = np.array(heatmap >= threshold, dtype=np.uint8)
 
     labels, stats_df = find_ccomp(thresholded)
@@ -426,8 +431,7 @@ def segment_vehicles(heatmap, threshold_ratio=0.8):
 
         bboxes[i, :] = arr
 
-
-    return thresholded, labels, stats_df, bboxes
+    return bboxes
 
 
 def load_pickle(fname):
