@@ -231,7 +231,14 @@ def image_histogram(im, n_bins=32):
     return counts
 
 
-def extract_features(im):
+def extract_features(
+    im,
+    hog_n_orient=9,
+    hog_cell_sz=8,
+    hog_block_sz=2,
+    binning_sz=32,
+    hist_bins=32,
+):
 
     gray =  cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
 
@@ -244,12 +251,12 @@ def extract_features(im):
     G = im[:, :, 1]
     B = im[:, :, 2]
 
-    hog_features = extract_hog_features(gray)
-    binned_pixels = spatial_binning(gray)
+    hog_features = extract_hog_features(gray, hog_n_orient, hog_cell_sz, hog_block_sz)
+    binned_pixels = spatial_binning(gray, binning_sz)
 
     histograms = []
     for channel in (R, G, B, H, U):
-        hist = image_histogram(channel)
+        hist = image_histogram(channel, hist_bins)
         histograms.append(hist)
 
     hist_vec = np.hstack(histograms)
@@ -276,7 +283,7 @@ def split_original_features(list_of_feature_vecs):
     return X_train, X_test
 
 
-def prepare_train_test_data_single_class(imfiles):
+def prepare_train_test_data_single_class(imfiles, hyperparams):
     '''
     Prepare features from the supplied image files
     characterized with a fixed y value (0 or 1).
@@ -290,7 +297,7 @@ def prepare_train_test_data_single_class(imfiles):
     for imfile in imfiles:
 
         im = open_image(imfile)
-        im_features = extract_features(im)
+        im_features = extract_features(im, **hyperparams)
 
         for k in FEATURE_SETS:
             lists_of_feature_vecs[k].append(im_features[k])
@@ -303,7 +310,7 @@ def prepare_train_test_data_single_class(imfiles):
     return train_orig, test_orig
 
 
-def prepare_train_test_data(imfiles_0, imfiles_1):
+def prepare_train_test_data(imfiles_0, imfiles_1, hyperparams):
     '''
     Preprocess all image files (for both y=0 and y=1 cases)
     and return training and testing data sets, and the FeatureScaler object
@@ -311,10 +318,16 @@ def prepare_train_test_data(imfiles_0, imfiles_1):
     '''
 
     print('Extracting original heterogeneous features from images (class 0)')
-    train_orig_0, test_orig_0 = prepare_train_test_data_single_class(imfiles_0)
+    train_orig_0, test_orig_0 = prepare_train_test_data_single_class(
+        imfiles_0,
+        hyperparams
+    )
 
     print('Extracting original heterogeneous features from images (class 1)')
-    train_orig_1, test_orig_1 = prepare_train_test_data_single_class(imfiles_1)
+    train_orig_1, test_orig_1 = prepare_train_test_data_single_class(
+        imfiles_1,
+        hyperparams
+    )
 
     print('Scaling features')
 
@@ -347,18 +360,20 @@ def prepare_train_test_data(imfiles_0, imfiles_1):
         np.ones( test_orig_1['hog'].shape[0] ),
     ))
 
-    return X_train, y_train, X_test, y_test, scaler
+    feature_sets_sizes = {k: train_orig_all[k].shape[1] for k in FEATURE_SETS}
+
+    return X_train, y_train, X_test, y_test, scaler, feature_sets_sizes
 
 
-def create_feature_extractor(scaler):
+def create_feature_extractor(scaler, hyperparams):
 
     def extract(im):
-        features_dict = extract_features(im)
+        features_dict = extract_features(im, **hyperparams)
         scaled_dict = scaler.scale(features_dict)
 
         x = np.hstack(
             [scaled_dict[k] for k in FEATURE_SETS]
-        )#.reshape(-1)
+        )
 
         return x
 
