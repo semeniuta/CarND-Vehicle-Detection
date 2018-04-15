@@ -74,16 +74,7 @@ def visualize_window_search(im_src, dir_output):
 
 def visualize_heatmap(dir_images, dir_ml, dir_output):
 
-    classifiers_file = os.path.join(dir_ml, 'classifiers.p')
-    scaler_file = os.path.join(dir_ml, 'scaler.p')
-    hp_file = os.path.join(dir_ml, 'hyper.json')
-
-    hyperparams = vdetect.load_json(hp_file)
-    scaler = vdetect.load_pickle(scaler_file)
-    classifiers = vdetect.load_pickle(classifiers_file)
-
-    extract = vdetect.create_feature_extractor(scaler, hyperparams)
-
+    classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
     plt.figure(figsize=(10, 20))
@@ -107,6 +98,37 @@ def visualize_heatmap(dir_images, dir_ml, dir_output):
     plt.savefig(os.path.join(dir_output, 'heatmap.jpg'))
 
 
+def visualize_classifiers(dir_images, dir_ml, dir_output):
+
+    classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
+    images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
+
+    n_cols = len(classifiers) + 1
+    n_images = len(images)
+
+    plt.figure(figsize=(20, 15))
+    idx = 1
+    for im in images:
+
+        plt.subplot(n_images, n_cols, idx)
+        plt.imshow(im)
+        plt.axis('off')
+        idx += 1
+
+        for k, clf in classifiers.items():
+
+            heatmap = vdetect.sliding_window(im, extract, [classifiers[k]])
+
+            plt.subplot(n_images, n_cols, idx)
+            plt.imshow(heatmap)
+            plt.axis('off')
+            plt.title(k)
+            idx += 1
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(dir_output, 'classifiers.jpg'))
+
+
 if __name__ == '__main__':
 
     DIR_OUT = 'output_images'
@@ -115,6 +137,12 @@ if __name__ == '__main__':
     visualize_window_search('test_images/test3.jpg', DIR_OUT)
 
     visualize_heatmap(
+        'test_images',
+        'serialize/2018-04-15_113152',
+        DIR_OUT
+    )
+
+    visualize_classifiers(
         'test_images',
         'serialize/2018-04-15_113152',
         DIR_OUT

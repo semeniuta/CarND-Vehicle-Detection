@@ -434,6 +434,21 @@ def segment_vehicles(heatmap, threshold_ratio=0.7, low_limit=10):
     return bboxes
 
 
+def load_ml_results(dir_ml):
+
+    classifiers_file = os.path.join(dir_ml, 'classifiers.p')
+    scaler_file = os.path.join(dir_ml, 'scaler.p')
+    hp_file = os.path.join(dir_ml, 'hyper.json')
+
+    hyperparams = load_json(hp_file)
+    scaler = load_pickle(scaler_file)
+    classifiers = load_pickle(classifiers_file)
+
+    extract = create_feature_extractor(scaler, hyperparams)
+
+    return classifiers, extract, scaler, hyperparams
+
+
 def load_pickle(fname):
     with open(fname, 'rb') as f:
         return pickle.load(f)
