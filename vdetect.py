@@ -11,6 +11,8 @@ import matplotlib.image as mpimg
 from skimage.feature import hog
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import pickle
+import json
 
 from scaler import FeatureScaler
 
@@ -378,3 +380,13 @@ def create_feature_extractor(scaler, hyperparams):
         return x
 
     return extract
+
+
+def load_pickle(fname):
+    with open(fname, 'rb') as f:
+        return pickle.load(f)
+
+
+def load_json(fname):
+    with open(fname, 'r') as f:
+        return json.load(f)

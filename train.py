@@ -32,10 +32,10 @@ if __name__ == '__main__':
     print('Number of non-vehicle examples:', len(imfiles_0))
 
     hyperparams = {
-        'hog_n_orient': 9,
+        'hog_n_orient': 12,
         'hog_cell_sz': 8,
-        'hog_block_sz': 4,
-        'binning_sz': 8,
+        'hog_block_sz': 2,
+        'binning_sz': 16,
         'hist_bins': 64
     }
 
@@ -87,5 +87,5 @@ if __name__ == '__main__':
     print('Saved scaler to {}'.format(scaler_fname))
 
     hp_fname = os.path.join(savedir, 'hyper.json')
-    save_obj(hyperparams, hp_fname)
+    save_json(hyperparams, hp_fname)
     print('Saved hyperparams to {}'.format(hp_fname))

@@ -37,6 +37,12 @@ Upon extraction, the three feature sets are returned separately as values in a d
 
 ### Sliding window
 
+The sliding window strategy applied in this project is based on a series of sliding window loops with windows of varying sizes over different search area.
+
+Initially, the main region of interest (ROI) is chosen in the middle of the image by discarding the top and the bottom parts of an image. As such, the only the road projection is further searched.
+
+
+
 
 ### Machine learning
 
