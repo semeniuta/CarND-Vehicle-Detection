@@ -41,10 +41,11 @@ The sliding window strategy applied in this project is based on a series of slid
 
 Initially, the main region of interest (ROI) is chosen in the middle of the image by discarding the top and the bottom parts of an image. As such, the only the road projection is further searched.
 
-
+[...]
 
 
 ### Machine learning
 
+To detect vehicles in the road images, several supervised classifiers (implemented in Scikit-learn) are trained given the vehicle/non-vehicle data, which was fed through the feature extraction routine, described earlier. The effects of different classifiers and their parameterization on the test images were evaluated graphically, by visual analysis of the heatmaps.
 
 ### Vehicles detection
