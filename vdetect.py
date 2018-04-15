@@ -5,6 +5,7 @@ Core functions for vehicle detection
 import os
 from glob import glob
 import numpy as np
+import pandas as pd
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -380,6 +381,53 @@ def create_feature_extractor(scaler, hyperparams):
         return x
 
     return extract
+
+
+def find_ccomp(im, *args, **kwargs):
+
+    num, labels, stats, centroids = cv2.connectedComponentsWithStats(im, *args, **kwargs)
+
+    stats_df = pd.DataFrame(stats, columns=['left', 'top', 'width', 'height', 'area'])
+    stats_df['x'] = centroids[:,0]
+    stats_df['y'] = centroids[:,1]
+
+    return labels, stats_df
+
+
+def mask_threashold_range(im, thresh_min, thresh_max):
+    '''
+    Return a binary mask image where pixel intensities
+    of the original image lie within [thresh_min, thresh_max)
+    '''
+
+    binary_output = (im >= thresh_min) & (im < thresh_max)
+    return np.uint8(binary_output)
+
+
+def segment_vehicles(heatmap, threshold_ratio=0.8):
+
+    threshold = threshold_ratio * np.max(heatmap)
+    thresholded = np.array(heatmap >= threshold, dtype=np.uint8)
+
+    labels, stats_df = find_ccomp(thresholded)
+
+    n = len(stats_df) - 1
+    bboxes = np.zeros((n, 4), dtype=np.int)
+
+    df = stats_df.iloc[1:]
+    for i in range(n):
+
+        arr = np.array([
+            df.iloc[i]['left'],
+            df.iloc[i]['top'],
+            df.iloc[i]['left'] + df.iloc[i]['width'],
+            df.iloc[i]['top'] + df.iloc[i]['height']
+        ])
+
+        bboxes[i, :] = arr
+
+
+    return thresholded, labels, stats_df, bboxes
 
 
 def load_pickle(fname):
