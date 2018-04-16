@@ -195,10 +195,7 @@ def define_main_region_custom():
     return 0, y_top, x_max, y_bottom
 
 
-def sliding_window(im, extract, classifiers):
-
-    rows, cols = im.shape[:2]
-    canvas = np.zeros((rows, cols))
+def define_loops_custom_1():
 
     main_region = define_main_region_custom()
     mr_x0, mr_y0, mr_x1, mr_y1 = main_region
@@ -209,6 +206,27 @@ def sliding_window(im, extract, classifiers):
         window_loop(128, 64, mr_x0, mr_y0+128, mr_x1, mr_y1-64),
         window_loop(64, 32, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64)
     ]
+
+    return loops
+
+def define_loops_custom_2():
+
+    main_region = define_main_region_custom()
+    mr_x0, mr_y0, mr_x1, mr_y1 = main_region
+
+    loops = [
+        window_loop(256, 64, mr_x0, mr_y0, mr_x1, mr_y1),
+        window_loop(128, 32, mr_x0, mr_y0+128, mr_x1, mr_y1-64),
+        window_loop(64, 16, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64)
+    ]
+
+    return loops
+
+
+def sliding_window(im, loops, extract, classifiers):
+
+    rows, cols = im.shape[:2]
+    canvas = np.zeros((rows, cols))
 
     for loop in loops:
         for bbox in loop:

@@ -26,31 +26,17 @@ def visualize_window_search(im_src, dir_output):
     main_region = vdetect.define_main_region_custom()
     mr_x0, mr_y0, mr_x1, mr_y1 = main_region
 
-    '''
-    loops = [
-        ((512, 256), vdetect.window_loop(512, 256, mr_x0, mr_y0, mr_x1, mr_y1)),
-        ((256, 128), vdetect.window_loop(256, 128, mr_x0, mr_y0, mr_x1, mr_y1)),
-        ((128, 64), vdetect.window_loop(128, 64, mr_x0, mr_y0+128, mr_x1, mr_y1-64)),
-        ((64, 32), vdetect.window_loop(64, 32, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64))
-    ]
-    '''
-
-    loops = [
-        ((512, 128), vdetect.window_loop(512, 128, mr_x0, mr_y0, mr_x1, mr_y1)),
-        ((256, 64), vdetect.window_loop(256, 64, mr_x0, mr_y0, mr_x1, mr_y1)),
-        ((128, 32), vdetect.window_loop(128, 32, mr_x0, mr_y0+128, mr_x1, mr_y1-64)),
-        ((64, 16), vdetect.window_loop(64, 16, mr_x0, mr_y0+128+64, mr_x1, mr_y1-64-64))
-    ]
+    loops = vdetect.define_loops_custom_2()
 
     plt.figure(figsize=(20, 12))
     idx = 1
-    for ss, loop in loops:
+    for loop in loops:
 
         plt.subplot(2, 2, idx)
         plt.imshow(vdetect.draw_boxes(im, loop))
 
-        size, step = ss
-        plt.title('size={:d}, step={:d}'.format(size, step))
+        #size, step = ss
+        #plt.title('size={:d}, step={:d}'.format(size, step))
         plt.axis('off')
         idx += 1
 
@@ -64,11 +50,13 @@ def visualize_heatmap(dir_images, dir_ml, dir_output):
     classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
+    loops = vdetect.define_loops_custom_2()
+
     plt.figure(figsize=(10, 20))
     idx = 1
     for im in images:
 
-        swres = vdetect.sliding_window(im, extract, classifiers.values())
+        swres = vdetect.sliding_window(im, loops, extract, classifiers.values())
 
         plt.subplot(6, 2, idx)
         plt.imshow(im)
@@ -90,6 +78,8 @@ def visualize_classifiers(dir_images, dir_ml, dir_output):
     classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
+    loops = vdetect.define_loops_custom_2()
+
     n_cols = len(classifiers) + 1
     n_images = len(images)
 
@@ -104,7 +94,7 @@ def visualize_classifiers(dir_images, dir_ml, dir_output):
 
         for k, clf in classifiers.items():
 
-            heatmap = vdetect.sliding_window(im, extract, [classifiers[k]])
+            heatmap = vdetect.sliding_window(im, loops, extract, [classifiers[k]])
 
             plt.subplot(n_images, n_cols, idx)
             plt.imshow(heatmap)
