@@ -91,6 +91,36 @@ def increment_window(im, bbox, increment_val=1):
 
 
 def window_loop(side_len, step, x0, y0, x1, y1):
+
+    bboxes = []
+
+    y = y0
+    while y < y1:
+        y_other = y + (side_len - 1)
+
+        if y_other > y1:
+            break
+
+        x = x0
+        while x < x1:
+
+            x_other = x + (side_len - 1)
+
+            if x_other > x1:
+                break
+
+            bboxes.append(
+                np.array([x, y, x_other, y_other])
+            )
+
+            x += step
+
+        y += step
+
+    return np.array(bboxes)
+
+
+def window_loop_old(side_len, step, x0, y0, x1, y1):
     '''
     Creates a NumPy array of square regions (with side side_len),
     such that the sequnce of regions (rows) in the array corresponds

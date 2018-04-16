@@ -146,8 +146,6 @@ if __name__ == '__main__':
     DIR_OUT = 'output_images'
 
     visualize_window_search('test_images/test3.jpg', DIR_OUT)
-    exit()
-
     visualize_main_region('test_images/test3.jpg', DIR_OUT)
 
     visualize_heatmap(
@@ -161,6 +159,8 @@ if __name__ == '__main__':
         'serialize/2018-04-15_113152',
         DIR_OUT
     )
+
+    exit()
 
     process = create_processing_func('serialize/2018-04-15_113152')
     process_and_save_video('project_video.mp4', 'output_images/project_video.mp4', process)
