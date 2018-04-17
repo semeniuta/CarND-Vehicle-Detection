@@ -73,9 +73,9 @@ def visualize_heatmap(dir_images, dir_ml, dir_output):
     plt.savefig(os.path.join(dir_output, 'heatmap.jpg'))
 
 
-def visualize_classifiers(dir_images, dir_ml, dir_output):
+def visualize_classifiers(dir_images, dir_ml, dir_output, extract_features_func=vdetect.extract_features):
 
-    classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
+    classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml, extract_features_func)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
     loops = vdetect.define_loops_custom_2()

@@ -33,17 +33,19 @@ if __name__ == '__main__':
     print('Number of non-vehicle examples:', len(imfiles_0))
 
     hyperparams = {
-        'hog_n_orient': 9,
-        'hog_cell_sz': 8,
-        'hog_block_sz': 2,
-        'binning_sz': 32,
-        'hist_bins': 32
+        'hog_n_orient': 10, #9
+        'hog_cell_sz': 8, #8
+        'hog_block_sz': 2, #2
+        'binning_sz': 8, #32
+        'hist_bins': 8 #32
     }
+    extract_features_func = vdetect.extract_features_2
 
     X_train, y_train, X_test, y_test, scaler, fs_sizes = vdetect.prepare_train_test_data(
         imfiles_0,
         imfiles_1,
-        hyperparams
+        hyperparams,
+        extract_features_func
     )
 
     print('Dimensionality of feature sets:', fs_sizes)
@@ -52,13 +54,19 @@ if __name__ == '__main__':
 
     classifiers = {
         'decision_tree_default': tree.DecisionTreeClassifier(),
-        'decision_tree_bigger_split': tree.DecisionTreeClassifier(
-            min_samples_split=5
+        'decision_tree_4': tree.DecisionTreeClassifier(
+            min_samples_split=4
         ),
-        'svc_custom': svm.SVC(
-            C=100.,
-            gamma=0.5
+        'decision_tree_8': tree.DecisionTreeClassifier(
+            min_samples_split=8
         ),
+        'decision_tree_16': tree.DecisionTreeClassifier(
+            min_samples_split=16
+        ),
+        #'svc_custom': svm.SVC(
+        #    C=100.,
+        #    gamma=0.5
+        #),
         #'naive_bayes': naive_bayes.GaussianNB(),
         'random_forest_default': ensemble.RandomForestClassifier(),
         'grad_boost_default': ensemble.GradientBoostingClassifier(),
@@ -91,4 +99,4 @@ if __name__ == '__main__':
     save_json(hyperparams, hp_fname)
     print('Saved hyperparams to {}'.format(hp_fname))
 
-    visualize_classifiers('test_images', savedir, savedir)
+    genmedia.visualize_classifiers('test_images', savedir, savedir, extract_features_func)

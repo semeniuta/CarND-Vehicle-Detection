@@ -321,6 +321,49 @@ def extract_features(
     return features
 
 
+def extract_features_2(
+    im,
+    hog_n_orient=9,
+    hog_cell_sz=8,
+    hog_block_sz=2,
+    binning_sz=32,
+    hist_bins=32,
+):
+
+    YCrCb = cv2.cvtColor(im, cv2.COLOR_BGR2YCrCb)
+    Cr = YCrCb[:, :, 1]
+    Cb = YCrCb[:, :, 2]
+
+    LUV = convert_colorspace_and_get_channels(im, cv2.COLOR_RGB2LUV)
+    HLS = convert_colorspace_and_get_channels(im, cv2.COLOR_RGB2HLS)
+
+    H = HLS[0]
+    U = LUV[1]
+    R = im[:, :, 0]
+    G = im[:, :, 1]
+    B = im[:, :, 2]
+
+    hog_features = extract_hog_features(Cb, hog_n_orient, hog_cell_sz, hog_block_sz)
+
+    gray =  cv2.cvtColor(im, cv2.COLOR_RGB2GRAY)
+    binned_pixels = spatial_binning(gray, binning_sz)
+
+    histograms = []
+    for channel in (R, G, B, H, U, Cr, Cb):
+        hist = image_histogram(channel, hist_bins)
+        histograms.append(hist)
+
+    hist_vec = np.hstack(histograms)
+
+    features = {
+        'hog': hog_features,
+        'binned': binned_pixels,
+        'hist': hist_vec
+    }
+
+    return features
+
+
 def split_original_features(list_of_feature_vecs):
     '''
     Convert a list of feature vectors into
@@ -334,7 +377,11 @@ def split_original_features(list_of_feature_vecs):
     return X_train, X_test
 
 
-def prepare_train_test_data_single_class(imfiles, hyperparams):
+def prepare_train_test_data_single_class(
+    imfiles,
+    hyperparams,
+    extract_features_func=extract_features
+):
     '''
     Prepare features from the supplied image files
     characterized with a fixed y value (0 or 1).
@@ -348,7 +395,7 @@ def prepare_train_test_data_single_class(imfiles, hyperparams):
     for imfile in imfiles:
 
         im = open_image(imfile)
-        im_features = extract_features(im, **hyperparams)
+        im_features = extract_features_func(im, **hyperparams)
 
         for k in FEATURE_SETS:
             lists_of_feature_vecs[k].append(im_features[k])
@@ -361,7 +408,12 @@ def prepare_train_test_data_single_class(imfiles, hyperparams):
     return train_orig, test_orig
 
 
-def prepare_train_test_data(imfiles_0, imfiles_1, hyperparams):
+def prepare_train_test_data(
+    imfiles_0,
+    imfiles_1,
+    hyperparams,
+    extract_features_func=extract_features
+):
     '''
     Preprocess all image files (for both y=0 and y=1 cases)
     and return training and testing data sets, and the FeatureScaler object
@@ -371,13 +423,15 @@ def prepare_train_test_data(imfiles_0, imfiles_1, hyperparams):
     print('Extracting original heterogeneous features from images (class 0)')
     train_orig_0, test_orig_0 = prepare_train_test_data_single_class(
         imfiles_0,
-        hyperparams
+        hyperparams,
+        extract_features_func
     )
 
     print('Extracting original heterogeneous features from images (class 1)')
     train_orig_1, test_orig_1 = prepare_train_test_data_single_class(
         imfiles_1,
-        hyperparams
+        hyperparams,
+        extract_features_func
     )
 
     print('Scaling features')
@@ -416,10 +470,10 @@ def prepare_train_test_data(imfiles_0, imfiles_1, hyperparams):
     return X_train, y_train, X_test, y_test, scaler, feature_sets_sizes
 
 
-def create_feature_extractor(scaler, hyperparams):
+def create_feature_extractor(scaler, hyperparams, extract_features_func=extract_features):
 
     def extract(im):
-        features_dict = extract_features(im, **hyperparams)
+        features_dict = extract_features_func(im, **hyperparams)
         scaled_dict = scaler.scale(features_dict)
 
         x = np.hstack(
@@ -482,7 +536,7 @@ def segment_vehicles(heatmap, threshold_ratio=0.7, low_limit=10):
     return bboxes
 
 
-def load_ml_results(dir_ml):
+def load_ml_results(dir_ml, extract_features_func=extract_features):
 
     classifiers_file = os.path.join(dir_ml, 'classifiers.p')
     scaler_file = os.path.join(dir_ml, 'scaler.p')
@@ -492,7 +546,7 @@ def load_ml_results(dir_ml):
     scaler = load_pickle(scaler_file)
     classifiers = load_pickle(classifiers_file)
 
-    extract = create_feature_extractor(scaler, hyperparams)
+    extract = create_feature_extractor(scaler, hyperparams, extract_features_func)
 
     return classifiers, extract, scaler, hyperparams
 
