@@ -579,7 +579,7 @@ def load_ml_results(dir_ml, extract_features_func=extract_features):
 def select_classifiers(classifiers, clf_names=None):
 
     if clf_names is None:
-        return classifiers.items()
+        return classifiers.values()
     else:
         return [classifiers[name] for name in clf_names]
 

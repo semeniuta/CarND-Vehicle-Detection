@@ -100,14 +100,52 @@ def visualize_classifiers(dir_images, dir_ml, dir_output, extract_features_func=
     plt.savefig(os.path.join(dir_output, 'classifiers.jpg'))
 
 
+def visualize_segmentation(dir_images, dir_ml, dir_output, clf_names=None):
+
+    classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
+    images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
+
+    loops = define_loops_func()
+
+    selected_classifiers = vdetect.select_classifiers(classifiers, clf_names)
+
+    heatmaps = []
+    for im in images:
+
+        heatmap = vdetect.sliding_window(im, loops, extract, selected_classifiers)
+        heatmaps.append(heatmap)
+
+    plt.figure(figsize=(12, 10))
+    idx = 1
+    for im, heatmap in zip(images, heatmaps):
+
+        bboxes = vdetect.segment_vehicles(heatmap)
+
+        plt.subplot(3, 2, idx)
+
+        if bboxes is not None:
+            plt.imshow(vdetect.draw_boxes(im, bboxes))
+        else:
+            plt.imshow(im)
+
+        plt.axis('off')
+        idx += 1
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(dir_output, 'segment.jpg'))
+
+
+
 def create_processing_func(dir_ml, clf_names=None):
 
     classifiers, extract, _, _ = vdetect.load_ml_results(dir_ml)
     selected_classifiers = vdetect.select_classifiers(classifiers, clf_names)
 
+    loops = define_loops_func()
+
     def process(frame):
 
-        heatmap = vdetect.sliding_window(frame, extract, selected_classifiers)
+        heatmap = vdetect.sliding_window(frame, loops, extract, selected_classifiers)
         bboxes = vdetect.segment_vehicles(heatmap)
 
         if bboxes is None:
@@ -130,8 +168,16 @@ if __name__ == '__main__':
 
     DIR_OUT = 'output_images'
     DIR_TEST_IM = 'test_images'
-    CLF_DIR =  'serialize/2018-04-15_113152' #'serialize/2018-04-17_104850'
-    CLF_SELECTED = ['random_forest_default', 'decision_tree_bigger_split'] #['random_forest_default', 'random_forest_mss5']
+    CLF_DIR =  'serialize/2018-04-15_113152'
+    CLF_SELECTED = ['random_forest_default', 'decision_tree_bigger_split']
+
+    print('Creating visualization of vehicles segmentation')
+    visualize_segmentation(
+        DIR_TEST_IM,
+        CLF_DIR,
+        DIR_OUT,
+        CLF_SELECTED
+    )
 
     print('Creating window search visualization')
     visualize_window_search('test_images/test3.jpg', DIR_OUT)
@@ -151,8 +197,6 @@ if __name__ == '__main__':
         CLF_SELECTED
     )
 
-    exit()
-
     print('Creating video')
-    process = create_processing_func(CLF_DIR)
+    process = create_processing_func(CLF_DIR, CLF_SELECTED)
     process_and_save_video('project_video.mp4', 'output_images/project_video.mp4', process)
