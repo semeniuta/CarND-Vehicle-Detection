@@ -223,6 +223,31 @@ def define_loops_custom_2():
     return loops
 
 
+def define_main_region_custom_2():
+
+    x_left = 6 * 64
+    x_max = 1280
+
+    y_bottom = 650
+    y_top = y_bottom - (512 - 128 - 64)
+
+    return x_left, y_top, x_max, y_bottom
+
+
+def define_loops_custom_3():
+
+    main_region = define_main_region_custom_2()
+    mr_x0, mr_y0, mr_x1, mr_y1 = main_region
+
+    loops = [
+        window_loop(256, 64, mr_x0, mr_y0, mr_x1, mr_y1),
+        window_loop(128, 32, mr_x0, mr_y0, mr_x1, mr_y1-64),
+        window_loop(64, 16, mr_x0, mr_y0+64, mr_x1, mr_y1-128)
+    ]
+
+    return loops
+
+
 def sliding_window(im, loops, extract, classifiers):
 
     rows, cols = im.shape[:2]

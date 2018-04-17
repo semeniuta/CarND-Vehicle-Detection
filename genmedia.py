@@ -7,13 +7,15 @@ from glob import glob
 from moviepy.editor import VideoFileClip
 
 import vdetect
+from vdetect import define_loops_custom_3 as define_loops_func
+from vdetect import define_main_region_custom_2 as define_main_region_func
 
 
 def visualize_main_region(im_src, dir_output):
 
     im = mpimg.imread(im_src)
 
-    main_region = vdetect.define_main_region_custom()
+    main_region = define_main_region_func()
 
     viz = vdetect.draw_boxes(im, [main_region])
     mpimg.imsave(os.path.join(dir_output, 'mainROI.jpg'), viz)
@@ -23,20 +25,20 @@ def visualize_window_search(im_src, dir_output):
 
     im = mpimg.imread(im_src)
 
-    main_region = vdetect.define_main_region_custom()
-    mr_x0, mr_y0, mr_x1, mr_y1 = main_region
-
-    loops = vdetect.define_loops_custom_2()
+    main_region = define_main_region_func()
+    loops = define_loops_func()
 
     plt.figure(figsize=(20, 12))
-    idx = 1
+
+    plt.subplot(2, 2, 1)
+    plt.imshow( vdetect.draw_boxes(im, [main_region]) )
+    plt.axis('off')
+
+    idx = 2
     for loop in loops:
 
         plt.subplot(2, 2, idx)
-        plt.imshow(vdetect.draw_boxes(im, loop))
-
-        #size, step = ss
-        #plt.title('size={:d}, step={:d}'.format(size, step))
+        plt.imshow( vdetect.draw_boxes(im, loop) )
         plt.axis('off')
         idx += 1
 
@@ -50,7 +52,7 @@ def visualize_heatmap(dir_images, dir_ml, dir_output):
     classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
-    loops = vdetect.define_loops_custom_2()
+    loops = define_loops_func()
 
     plt.figure(figsize=(10, 20))
     idx = 1
@@ -78,7 +80,7 @@ def visualize_classifiers(dir_images, dir_ml, dir_output, extract_features_func=
     classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml, extract_features_func)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
-    loops = vdetect.define_loops_custom_2()
+    loops = define_loops_func()
 
     n_cols = len(classifiers) + 1
     n_images = len(images)
@@ -134,23 +136,24 @@ def process_and_save_video(video_fname_src, video_fname_dst, processing_func):
 if __name__ == '__main__':
 
     DIR_OUT = 'output_images'
+    DIR_TEST_IM = 'test_images'
+    CLF_DIR = 'serialize/2018-04-15_113152'
 
     visualize_window_search('test_images/test3.jpg', DIR_OUT)
-    visualize_main_region('test_images/test3.jpg', DIR_OUT)
 
-    visualize_heatmap(
-        'test_images',
-        'serialize/2018-04-15_113152',
+    visualize_classifiers(
+        DIR_TEST_IM,
+        CLF_DIR,
         DIR_OUT
     )
 
-    visualize_classifiers(
-        'test_images',
-        'serialize/2018-04-15_113152',
+    visualize_heatmap(
+        DIR_TEST_IM,
+        CLF_DIR,
         DIR_OUT
     )
 
     exit()
 
-    process = create_processing_func('serialize/2018-04-15_113152')
+    process = create_processing_func(CLF_DIR)
     process_and_save_video('project_video.mp4', 'output_images/project_video.mp4', process)

@@ -6,6 +6,7 @@ import json
 
 import vdetect
 import genmedia
+from vdetect import extract_features as extract_features_func
 
 
 def get_classifier_name(clf):
@@ -39,7 +40,6 @@ if __name__ == '__main__':
         'binning_sz': 8, #32
         'hist_bins': 8 #32
     }
-    extract_features_func = vdetect.extract_features_2
 
     X_train, y_train, X_test, y_test, scaler, fs_sizes = vdetect.prepare_train_test_data(
         imfiles_0,
@@ -100,3 +100,4 @@ if __name__ == '__main__':
     print('Saved hyperparams to {}'.format(hp_fname))
 
     genmedia.visualize_classifiers('test_images', savedir, savedir, extract_features_func)
+    print('Saved sliding window loop visualization to {}/classifiers.jpg'.format(savedir))
