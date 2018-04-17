@@ -34,11 +34,11 @@ if __name__ == '__main__':
     print('Number of non-vehicle examples:', len(imfiles_0))
 
     hyperparams = {
-        'hog_n_orient': 10, #9
+        'hog_n_orient': 9, #9
         'hog_cell_sz': 8, #8
         'hog_block_sz': 2, #2
-        'binning_sz': 8, #32
-        'hist_bins': 8 #32
+        'binning_sz': 32, #32
+        'hist_bins': 32 #32
     }
 
     X_train, y_train, X_test, y_test, scaler, fs_sizes = vdetect.prepare_train_test_data(
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     print('Training data shape:', X_train.shape, y_train.shape)
     print('Testing data shape:', X_test.shape, y_test.shape)
 
-    classifiers = {
+    classifiers_1 = {
         'decision_tree_default': tree.DecisionTreeClassifier(),
         'decision_tree_4': tree.DecisionTreeClassifier(
             min_samples_split=4
@@ -63,14 +63,24 @@ if __name__ == '__main__':
         'decision_tree_16': tree.DecisionTreeClassifier(
             min_samples_split=16
         ),
-        #'svc_custom': svm.SVC(
-        #    C=100.,
-        #    gamma=0.5
-        #),
-        #'naive_bayes': naive_bayes.GaussianNB(),
         'random_forest_default': ensemble.RandomForestClassifier(),
         'grad_boost_default': ensemble.GradientBoostingClassifier(),
     }
+
+    classifiers_2 = {
+        'random_forest_default': ensemble.RandomForestClassifier(),
+        'random_forest_mss10': ensemble.RandomForestClassifier(
+            min_samples_split=10
+        ),
+        'random_forest_ne15': ensemble.RandomForestClassifier(
+            n_estimators=15
+        ),
+        'random_forest_ne15_mss10': ensemble.RandomForestClassifier(
+            n_estimators=15, min_samples_split=10
+        ),
+    }
+
+    classifiers = classifiers_2
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     for k, clf in classifiers.items():
