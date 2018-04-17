@@ -11,16 +11,6 @@ from vdetect import define_loops_custom_3 as define_loops_func
 from vdetect import define_main_region_custom_2 as define_main_region_func
 
 
-def visualize_main_region(im_src, dir_output):
-
-    im = mpimg.imread(im_src)
-
-    main_region = define_main_region_func()
-
-    viz = vdetect.draw_boxes(im, [main_region])
-    mpimg.imsave(os.path.join(dir_output, 'mainROI.jpg'), viz)
-
-
 def visualize_window_search(im_src, dir_output):
 
     im = mpimg.imread(im_src)
@@ -47,18 +37,20 @@ def visualize_window_search(im_src, dir_output):
     plt.savefig(os.path.join(dir_output, 'winsearch.jpg'))
 
 
-def visualize_heatmap(dir_images, dir_ml, dir_output):
+def visualize_heatmap(dir_images, dir_ml, dir_output, clf_names=None):
 
     classifiers, extract, scaler, hyperparams = vdetect.load_ml_results(dir_ml)
     images = [mpimg.imread(f) for f in glob(dir_images + '/*.jpg')]
 
     loops = define_loops_func()
 
+    selected_classifiers = vdetect.select_classifiers(classifiers, clf_names)
+
     plt.figure(figsize=(10, 20))
     idx = 1
     for im in images:
 
-        swres = vdetect.sliding_window(im, loops, extract, classifiers.values())
+        heatmap = vdetect.sliding_window(im, loops, extract, selected_classifiers)
 
         plt.subplot(6, 2, idx)
         plt.imshow(im)
@@ -66,9 +58,9 @@ def visualize_heatmap(dir_images, dir_ml, dir_output):
         idx += 1
 
         plt.subplot(6, 2, idx)
-        plt.imshow(swres)
+        plt.imshow(heatmap)
         plt.axis('off')
-        plt.title('max={}'.format(np.max(swres)))
+        plt.title('max={}'.format(np.max(heatmap)))
         idx += 1
 
     plt.tight_layout()
@@ -108,13 +100,14 @@ def visualize_classifiers(dir_images, dir_ml, dir_output, extract_features_func=
     plt.savefig(os.path.join(dir_output, 'classifiers.jpg'))
 
 
-def create_processing_func(dir_ml):
+def create_processing_func(dir_ml, clf_names=None):
 
     classifiers, extract, _, _ = vdetect.load_ml_results(dir_ml)
+    selected_classifiers = vdetect.select_classifiers(classifiers, clf_names)
 
     def process(frame):
 
-        heatmap = vdetect.sliding_window(frame, extract, classifiers.values())
+        heatmap = vdetect.sliding_window(frame, extract, selected_classifiers)
         bboxes = vdetect.segment_vehicles(heatmap)
 
         if bboxes is None:
@@ -137,23 +130,29 @@ if __name__ == '__main__':
 
     DIR_OUT = 'output_images'
     DIR_TEST_IM = 'test_images'
-    CLF_DIR = 'serialize/2018-04-15_113152'
+    CLF_DIR =  'serialize/2018-04-15_113152' #'serialize/2018-04-17_104850'
+    CLF_SELECTED = ['random_forest_default', 'decision_tree_bigger_split'] #['random_forest_default', 'random_forest_mss5']
 
+    print('Creating window search visualization')
     visualize_window_search('test_images/test3.jpg', DIR_OUT)
 
+    print('Creating visualization of individual classifiers')
     visualize_classifiers(
         DIR_TEST_IM,
         CLF_DIR,
         DIR_OUT
     )
 
+    print('Creating visualization of joint heatmap from the selected classifiers')
     visualize_heatmap(
         DIR_TEST_IM,
         CLF_DIR,
-        DIR_OUT
+        DIR_OUT,
+        CLF_SELECTED
     )
 
     exit()
 
+    print('Creating video')
     process = create_processing_func(CLF_DIR)
     process_and_save_video('project_video.mp4', 'output_images/project_video.mp4', process)

@@ -69,14 +69,17 @@ if __name__ == '__main__':
 
     classifiers_2 = {
         'random_forest_default': ensemble.RandomForestClassifier(),
+        'random_forest_mss5': ensemble.RandomForestClassifier(
+            min_samples_split=5
+        ),
         'random_forest_mss10': ensemble.RandomForestClassifier(
             min_samples_split=10
         ),
         'random_forest_ne15': ensemble.RandomForestClassifier(
             n_estimators=15
         ),
-        'random_forest_ne15_mss10': ensemble.RandomForestClassifier(
-            n_estimators=15, min_samples_split=10
+        'random_forest_ne20': ensemble.RandomForestClassifier(
+            n_estimators=20
         ),
     }
 

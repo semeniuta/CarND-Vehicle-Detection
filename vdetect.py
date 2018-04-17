@@ -576,6 +576,14 @@ def load_ml_results(dir_ml, extract_features_func=extract_features):
     return classifiers, extract, scaler, hyperparams
 
 
+def select_classifiers(classifiers, clf_names=None):
+
+    if clf_names is None:
+        return classifiers.items()
+    else:
+        return [classifiers[name] for name in clf_names]
+
+
 def load_pickle(fname):
     with open(fname, 'rb') as f:
         return pickle.load(f)
